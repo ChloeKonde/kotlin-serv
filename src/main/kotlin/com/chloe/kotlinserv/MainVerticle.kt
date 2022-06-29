@@ -1,14 +1,14 @@
 package com.chloe.kotlinserv
 
 import com.google.gson.Gson
-import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.ext.web.Router
 
 fun main(args: Array<String>) {
-    val vertx = Vertx.vertx()
-    val httpServer = vertx.createHttpServer()
-    val router = Router.router(vertx)
+    val myServer = VertxHttpServer()
+    myServer.start(8080)
+
+    val router = Router.router(myServer.vertx)
     val gson = Gson()
 
     router.get("/countrystats/").handler { ctx ->
@@ -24,6 +24,4 @@ fun main(args: Array<String>) {
         val data = GeoData("GB", 3243242, "myTestUser")
         response.end(gson.toJson(data))
     }
-
-    httpServer.listen(8080)
 }
