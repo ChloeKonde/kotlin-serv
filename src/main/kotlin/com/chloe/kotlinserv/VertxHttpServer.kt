@@ -1,31 +1,30 @@
 package com.chloe.kotlinserv
 
-import com.google.gson.Gson
 import io.vertx.core.Vertx
-import io.vertx.core.http.HttpServerResponse
 import io.vertx.ext.web.Router
+import io.vertx.ext.web.RoutingContext
 
 class VertxHttpServer : HttpServer {
-
-    override fun start(port: Int) {
+    lateinit var router: Router
+    override fun start(port: Int, routes: List<HttpRoute>) {
         val vertx = Vertx.vertx()
         val httpServer = vertx.createHttpServer()
-        val router = Router.router(vertx)
-        val gson = Gson()
+        router = Router.router(vertx)
 
-        router.get("/countrystats/").handler { ctx ->
-            val response: HttpServerResponse = ctx.response()
-            response.putHeader("content-type", "application/json")
-            val data = CountryStats("23-12-2000", "RUS", 3)
-            response.end(gson.toJson(data))
-        }
-
-        router.post("/geodata").handler { ctx ->
-            val response: HttpServerResponse = ctx.response()
-            response.putHeader("content-type", "application/json")
-            val data = GeoData("GB", 3243242, "myTestUser")
-            response.end(gson.toJson(data))
-        }
+        routes.forEach { route -> deployVertxRoute(route) }
         httpServer.listen(8080)
+    }
+
+    fun deployVertxRoute(route: HttpRoute) {
+        if (route.method == HttpMethod.GET) {
+            router.get(route.path).handler { ctx ->
+                val httpResponse = route.data.invoke()
+                convertHttpResponse(ctx, httpResponse)
+            }
+        }
+    }
+
+    fun convertHttpResponse(ctx: RoutingContext, httpResponse: HttpResponse) {
+        ctx.response().end(httpResponse.responseBody, httpResponse.code)
     }
 }
