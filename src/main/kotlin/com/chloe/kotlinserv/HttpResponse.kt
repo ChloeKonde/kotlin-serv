@@ -1,9 +1,9 @@
 package com.chloe.kotlinserv
 
-typealias Header = Map<String, String>
+typealias Headers = Map<String, String>
 
 data class HttpResponse(
-    val code: String,
+    val code: Int,
     val responseBody: String,
-    val contentType: Header
+    val contentType: Headers
 )

@@ -1,7 +1,7 @@
 package com.chloe.kotlinserv
 
 data class HttpRoute(
-    var path: String,
-    var method: HttpMethod,
-    var data: () -> HttpResponse
+    val endpoint: String,
+    val method: HttpMethod,
+    val processFunction: () -> HttpResponse
 )

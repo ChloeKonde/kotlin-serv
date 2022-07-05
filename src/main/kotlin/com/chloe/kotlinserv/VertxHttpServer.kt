@@ -5,26 +5,31 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 
 class VertxHttpServer : HttpServer {
-    lateinit var router: Router
+
     override fun start(port: Int, routes: List<HttpRoute>) {
         val vertx = Vertx.vertx()
         val httpServer = vertx.createHttpServer()
-        router = Router.router(vertx)
+        val router = Router.router(vertx)
 
-        routes.forEach { route -> deployVertxRoute(route) }
-        httpServer.listen(8080)
+        routes.forEach { route -> deployVertxRoute(route, router) }
+        httpServer.listen(port)
     }
 
-    fun deployVertxRoute(route: HttpRoute) {
+    private fun deployVertxRoute(route: HttpRoute, router: Router) {
         if (route.method == HttpMethod.GET) {
-            router.get(route.path).handler { ctx ->
-                val httpResponse = route.data.invoke()
+            router.get(route.endpoint).handler { ctx ->
+                val httpResponse = route.processFunction.invoke()
+                convertHttpResponse(ctx, httpResponse)
+            }
+        } else {
+            router.post(route.endpoint).handler { ctx ->
+                val httpResponse = route.processFunction.invoke()
                 convertHttpResponse(ctx, httpResponse)
             }
         }
     }
 
-    fun convertHttpResponse(ctx: RoutingContext, httpResponse: HttpResponse) {
-        ctx.response().end(httpResponse.responseBody, httpResponse.code)
+    private fun convertHttpResponse(ctx: RoutingContext, httpResponse: HttpResponse) {
+        ctx.response().setStatusCode(httpResponse.code).end(httpResponse.responseBody)
     }
 }
