@@ -12,7 +12,7 @@ class VertxHttpServer : HttpServer {
         val router = Router.router(vertx)
 
         routes.forEach { route -> deployVertxRoute(route, router) }
-        httpServer.listen(port)
+        httpServer.requestHandler(router).listen(port)
     }
 
     private fun deployVertxRoute(route: HttpRoute, router: Router) {
