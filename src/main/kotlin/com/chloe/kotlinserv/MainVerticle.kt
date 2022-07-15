@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
 
         connection.use {
             val statement =
-                connection.prepareStatement("SELECT country, toDate(timestamp) as time, count(country) FROM chloe.events group by country, timestamp")
+                connection.prepareStatement("SELECT country, toDate(timestamp) as time, count(country) FROM chloe.events group by country, toDate(timestamp)")
             val result = statement.executeQuery()
 
             val list = mutableListOf<CountryStats>()
@@ -65,7 +65,7 @@ fun main(args: Array<String>) {
                     contentType = mapOf("content-type" to "application/json")
                 )
             }
-        }  catch (e: Exception) {
+        } catch (e: Exception) {
             HttpResponse(
                 code = 500,
                 responseBody = "Internal server error",

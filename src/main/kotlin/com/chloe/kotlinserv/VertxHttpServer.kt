@@ -21,17 +21,19 @@ class VertxHttpServer : HttpServer {
 
         if (route.method == HttpMethod.GET) {
             router.get(route.endpoint).handler { ctx ->
-                val queryParams = ctx.queryParams().map { it.key to it.value }.groupBy({it.first},{it.second}).toMap()
-                val headers = ctx.request().headers().map { it.key to it.value }.groupBy({it.first},{it.second}).toMap()
-                val httpResponse = route.processFunction.invoke(HttpRequest(headers,"", queryParams))
+                val data = buildHttpResponse(ctx)
+                val httpResponse = route.processFunction.invoke(
+                    HttpRequest(requestHeaders = data[0], body = null, queryParameters = data[1])
+                )
                 convertHttpResponse(ctx, httpResponse)
             }
         } else {
             router.post(route.endpoint).handler { ctx ->
-                val queryParams = ctx.queryParams().map { it.key to it.value }.groupBy({it.first},{it.second}).toMap()
-                val headers = ctx.request().headers().map { it.key to it.value }.groupBy({it.first},{it.second}).toMap()
+                val data = buildHttpResponse(ctx)
                 val body = ctx.body().asString()
-                val httpResponse = route.processFunction.invoke(HttpRequest(headers, body, queryParams))
+                val httpResponse = route.processFunction.invoke(
+                    HttpRequest(requestHeaders = data[0], body = body, queryParameters = data[1])
+                )
                 convertHttpResponse(ctx, httpResponse)
             }
         }
@@ -43,5 +45,19 @@ class VertxHttpServer : HttpServer {
         } else {
             ctx.response().setStatusCode(httpResponse.code).end(httpResponse.responseBody)
         }
+    }
+
+    private fun buildHttpResponse(ctx: RoutingContext): List<Map<String, List<String>>> {
+        val queryParam =
+            ctx.queryParams().map { it.key to it.value }.groupBy({ it.first }, { it.second }).toMap()
+        val headers =
+            ctx.request().headers().map { it.key to it.value }.groupBy({ it.first }, { it.second }).toMap()
+
+        val result = mutableListOf<Map<String, List<String>>>()
+
+        result.add(headers)
+        result.add(queryParam)
+
+        return result
     }
 }
