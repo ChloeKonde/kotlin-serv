@@ -87,11 +87,11 @@ fun main(args: Array<String>) {
     myServer.start(port, listOf(getRoute, postRoute))
 
     val executor = Executors.newScheduledThreadPool(1)
-    val runnable = Runnable { batch.run() }
 
-    executor.schedule(
-        runnable,
-        20000,
-        TimeUnit.MILLISECONDS
+    executor.scheduleAtFixedRate(
+        batch,
+        20,
+        20,
+        TimeUnit.SECONDS
     )
 }
