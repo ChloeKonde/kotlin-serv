@@ -5,8 +5,6 @@ import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.io.File
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>) {
     val file = File(args[0])
@@ -23,6 +21,7 @@ fun main(args: Array<String>) {
     val ds = HikariDataSource(conf)
 
     val port = config.getInt("port")
+    val delay = config.getLong("delay")
     val myServer = VertxHttpServer()
     val json = Gson()
 
@@ -48,7 +47,7 @@ fun main(args: Array<String>) {
             if (list.isEmpty()) {
                 HttpResponse(
                     code = 204,
-                    responseBody = "No content",
+                    responseBody = null,
                     contentType = mapOf("content-type" to "text/plain")
                 )
             } else {
@@ -61,8 +60,7 @@ fun main(args: Array<String>) {
         }
     }
 
-    val query = "insert into chloe.events (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
-    val batch = Batch(ds = ds, query = query)
+    val batch = ClickhouseGeoDataWriterImpl(ds = ds, delay = delay)
 
     val postRoute = HttpRoute("/geodata", HttpMethod.POST) {
         try {
@@ -84,14 +82,6 @@ fun main(args: Array<String>) {
             )
         }
     }
+
     myServer.start(port, listOf(getRoute, postRoute))
-
-    val executor = Executors.newScheduledThreadPool(1)
-
-    executor.scheduleAtFixedRate(
-        batch,
-        20,
-        20,
-        TimeUnit.SECONDS
-    )
 }
