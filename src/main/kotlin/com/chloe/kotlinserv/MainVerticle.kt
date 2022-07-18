@@ -5,6 +5,8 @@ import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>) {
     val file = File(args[0])
@@ -29,7 +31,7 @@ fun main(args: Array<String>) {
 
         connection.use {
             val statement =
-                connection.prepareStatement("SELECT country, toDate(timestamp) as time, count(country) FROM chloe.events group by country, toDate(timestamp)")
+                connection.prepareStatement("SELECT country, toDate(timestamp) as time, count(country) FROM chloe.events WHERE country='user' group by country, toDate(timestamp)")
             val result = statement.executeQuery()
 
             val list = mutableListOf<CountryStats>()
@@ -42,37 +44,54 @@ fun main(args: Array<String>) {
                     )
                 )
             }
-            HttpResponse(
-                code = 200,
-                responseBody = json.toJson(list),
-                contentType = mapOf("content-type" to "application/json")
-            )
+
+            if (list.isEmpty()) {
+                HttpResponse(
+                    code = 204,
+                    responseBody = "No content",
+                    contentType = mapOf("content-type" to "text/plain")
+                )
+            } else {
+                HttpResponse(
+                    code = 200,
+                    responseBody = json.toJson(list),
+                    contentType = mapOf("content-type" to "application/json")
+                )
+            }
         }
     }
+
+    val query = "insert into chloe.events (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
+    val batch = Batch(ds = ds, query = query)
 
     val postRoute = HttpRoute("/geodata", HttpMethod.POST) {
         try {
             val data = json.fromJson(it.body, GeoData::class.java)
-            val connection = ds.connection
             val requestHeaders = it.requestHeaders["x-forwarded-for"]
-            connection.use {
-                val statement =
-                    connection.prepareStatement("insert into chloe.events values (${data.timestamp}, '${data.country}', '${requestHeaders?.firstOrNull()}', '${data.userId}')")
-                statement.executeQuery()
-                HttpResponse(
-                    code = 200,
-                    responseBody = null,
-                    contentType = mapOf("content-type" to "application/json")
-                )
-            }
-        } catch (e: Exception) {
+
+            batch.addToList(data, requestHeaders?.firstOrNull())
+
             HttpResponse(
-                code = 500,
-                responseBody = "Internal server error",
+                code = 200,
+                responseBody = null,
                 contentType = mapOf("content-type" to "application/json")
+            )
+        } catch (e: java.lang.NullPointerException) {
+            HttpResponse(
+                code = 400,
+                responseBody = "Bad request",
+                contentType = mapOf("content-type" to "text/plain")
             )
         }
     }
-
     myServer.start(port, listOf(getRoute, postRoute))
+
+    val executor = Executors.newScheduledThreadPool(1)
+    val runnable = Runnable { batch.run() }
+
+    executor.schedule(
+        runnable,
+        20000,
+        TimeUnit.MILLISECONDS
+    )
 }
