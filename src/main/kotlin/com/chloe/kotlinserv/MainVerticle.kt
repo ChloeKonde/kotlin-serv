@@ -1,6 +1,7 @@
 package com.chloe.kotlinserv
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -21,65 +22,121 @@ fun main(args: Array<String>) {
     val ds = HikariDataSource(conf)
 
     val port = config.getInt("port")
-    val delay = config.getLong("delay")
+    val geoDataBatchDelay = config.getLong("geoData.write.batch.delay")
     val myServer = VertxHttpServer()
     val json = Gson()
 
     val getRoute = HttpRoute("/countrystats", HttpMethod.GET) {
         val connection = ds.connection
+        val groupLocal = it.queryParameters.getValue("groupLocal").firstOrNull()
+        val startDate = it.queryParameters.getValue("startDate").firstOrNull()
+        val endDate = it.queryParameters.getValue("endDate").firstOrNull()
 
-        connection.use {
-            val statement =
-                connection.prepareStatement("SELECT country, toDate(timestamp) as time, count(country) FROM chloe.events WHERE country='user' group by country, toDate(timestamp)")
-            val result = statement.executeQuery()
+        if (groupLocal == "true") {
+            connection.use {
+                val statement = connection.prepareStatement(
+                    "SELECT toDate(timestamp), country from chloe.events " +
+                        "where toDate(timestamp) > ? and toDate(timestamp) < ?"
+                )
 
-            val list = mutableListOf<CountryStats>()
-            while (result.next()) {
-                list.add(
-                    CountryStats(
-                        data = result.getString(1),
-                        country = result.getString(2),
-                        count = result.getInt(3)
+                statement.setString(1, startDate)
+                statement.setString(2, endDate)
+
+                val result = statement.executeQuery()
+
+                val list = mutableListOf<RawResponseFromClickhouse>()
+                while (result.next()) {
+                    list.add(
+                        RawResponseFromClickhouse(
+                            timestamp = result.getString(1),
+                            country = result.getString(2),
+                        )
                     )
-                )
-            }
+                }
 
-            if (list.isEmpty()) {
-                HttpResponse(
-                    code = 204,
-                    responseBody = null,
-                    contentType = mapOf("content-type" to "text/plain")
-                )
-            } else {
+                val groupingResult = list.groupingBy { it.timestamp to it.country }.eachCount().toList()
+                val data = mutableListOf<CountryStats>()
+
+                groupingResult.forEach {
+                    data.add(CountryStats(it.first.first, it.first.second, it.second))
+                }
+
                 HttpResponse(
                     code = 200,
-                    responseBody = json.toJson(list),
+                    responseBody = json.toJson(data),
                     contentType = mapOf("content-type" to "application/json")
                 )
+            }
+        } else {
+            connection.use {
+                val statement =
+                    connection.prepareStatement(
+                        "SELECT country, toDate(timestamp) as time, count(country) " +
+                            "FROM chloe.events WHERE toDate(timestamp) > ? AND toDate(timestamp) < ?" +
+                            " GROUP BY country, toDate(timestamp)"
+                    )
+
+                statement.setString(1, startDate)
+                statement.setString(2, endDate)
+
+                val result = statement.executeQuery()
+
+                val list = mutableListOf<CountryStats>()
+                while (result.next()) {
+                    list.add(
+                        CountryStats(
+                            data = result.getString(2),
+                            country = result.getString(1),
+                            count = result.getInt(3)
+                        )
+                    )
+                }
+
+                if (list.isEmpty()) {
+                    HttpResponse(
+                        code = 204,
+                        responseBody = null,
+                        contentType = mapOf("content-type" to "text/plain")
+                    )
+                } else {
+                    HttpResponse(
+                        code = 200,
+                        responseBody = json.toJson(list),
+                        contentType = mapOf("content-type" to "application/json")
+                    )
+                }
             }
         }
     }
 
-    val batch = ClickhouseGeoDataWriterImpl(ds = ds, delay = delay)
+    val batch = ClickhouseGeoDataWriterImpl(ds = ds, geoDataBatchDelay = geoDataBatchDelay)
 
     val postRoute = HttpRoute("/geodata", HttpMethod.POST) {
-        try {
-            val data = json.fromJson(it.body, GeoData::class.java)
-            val requestHeaders = it.requestHeaders["x-forwarded-for"]
-
-            batch.addToList(data, requestHeaders?.firstOrNull())
-
-            HttpResponse(
-                code = 200,
-                responseBody = null,
-                contentType = mapOf("content-type" to "application/json")
-            )
-        } catch (e: java.lang.NullPointerException) {
+        if (it.body == null) {
             HttpResponse(
                 code = 400,
-                responseBody = "Bad request",
+                responseBody = null,
                 contentType = mapOf("content-type" to "text/plain")
             )
+        } else {
+            try {
+                val data = json.fromJson(it.body, GeoData::class.java)
+                val requestHeaders = it.requestHeaders["x-forwarded-for"]
+
+                batch.addToList(data, requestHeaders?.firstOrNull())
+
+                HttpResponse(
+                    code = 200,
+                    responseBody = null,
+                    contentType = mapOf("content-type" to "application/json")
+                )
+            } catch (e: JsonSyntaxException) {
+                HttpResponse(
+                    code = 400,
+                    responseBody = null,
+                    contentType = mapOf("content-type" to "text/plain")
+                )
+            }
         }
     }
 

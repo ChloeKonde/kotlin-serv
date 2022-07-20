@@ -49,11 +49,11 @@ class VertxHttpServer : HttpServer {
         }
     }
 
-    private fun getHeaders(ctx: RoutingContext) : Map<String, List<String>> {
+    private fun getHeaders(ctx: RoutingContext): Map<String, List<String>> {
         return ctx.request().headers().map { it.key to it.value }.groupBy({ it.first }, { it.second }).toMap()
     }
 
-    private fun getQueryParams(ctx: RoutingContext) : Map<String, List<String>> {
+    private fun getQueryParams(ctx: RoutingContext): Map<String, List<String>> {
         return ctx.queryParams().map { it.key to it.value }.groupBy({ it.first }, { it.second }).toMap()
     }
 }

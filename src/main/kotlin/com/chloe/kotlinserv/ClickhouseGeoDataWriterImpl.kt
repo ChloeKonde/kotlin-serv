@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit
 
 private data class FullData(val geoData: GeoData, val ipAddress: String?)
 
-class ClickhouseGeoDataWriterImpl(private val ds: HikariDataSource, delay: Long) : GeoDataWriter {
-    private val list = (mutableListOf<FullData>())
+class ClickhouseGeoDataWriterImpl(private val ds: HikariDataSource, geoDataBatchDelay: Long) : GeoDataWriter {
+    private val list = ( mutableListOf<FullData>())
     private val query = "insert into chloe.events (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
@@ -15,12 +15,13 @@ class ClickhouseGeoDataWriterImpl(private val ds: HikariDataSource, delay: Long)
 
         executor.scheduleAtFixedRate(
             { flush() },
-            delay,
-            delay,
+            geoDataBatchDelay,
+            geoDataBatchDelay,
             TimeUnit.SECONDS
         )
     }
 
+    @Synchronized
     override fun addToList(geoData: GeoData, ipAddress: String?) {
         list.add(FullData(geoData, ipAddress))
     }
