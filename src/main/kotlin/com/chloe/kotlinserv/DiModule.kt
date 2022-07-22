@@ -4,13 +4,23 @@ import com.chloe.kotlinserv.http.*
 import com.chloe.kotlinserv.route.GetCountryStatsRoute
 import com.chloe.kotlinserv.route.PostGeoDataRoute
 import com.chloe.kotlinserv.vertx.VertxHttpServer
+import com.google.inject.AbstractModule
+import com.google.inject.Provides
+import com.google.inject.Singleton
+import com.google.inject.multibindings.Multibinder
+import com.google.inject.name.Named
+import com.google.inject.name.Names
 import com.typesafe.config.Config
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 
-class DiModule(private val config: Config) {
+class DiModule(private val config: Config) : AbstractModule() {
+    private val actionBinder: Multibinder<HttpRoute>? = null
+
+    @Named("geoDataBatchDelay")
     private val geoDataBatchDelay = config.getLong("geoData.write.batch.delay")
 
+    @Provides
     private fun getClickhouseDataSource(): HikariDataSource {
         val conf = HikariConfig()
         val url = config.getString("clickhouse.url")
@@ -23,22 +33,29 @@ class DiModule(private val config: Config) {
         return HikariDataSource(conf)
     }
 
-    fun getHttpServer(): HttpServer {
-        return VertxHttpServer()
+    override fun configure() {
+        val httpRoutes = Multibinder.newSetBinder(binder(), HttpRoute::class.java)
+        httpRoutes.addBinding().to(GetCountryStatsRoute::class.java).`in`(Singleton::class.java)
+        httpRoutes.addBinding().to(PostGeoDataRoute::class.java).`in`(Singleton::class.java)
+
+        bindConstant().annotatedWith(Names.named("geoDataBatchDelay")).to(config.getLong("geoData.write.batch.delay"))
     }
 
-    fun getCountryStats(request: HttpRequest): HttpResponse {
-        val getRoute = GetCountryStatsRoute(getClickhouseDataSource())
-        return getRoute.processFunction.invoke(request)
+    @Provides
+    fun getHttpServer(httpRoutes: Set<HttpRoute>): HttpServer {
+        return VertxHttpServer(httpRoutes)
     }
 
-    fun postGeoData(request: HttpRequest): HttpResponse {
-        val postRoute = PostGeoDataRoute(
-            dataSource = getClickhouseDataSource(),
+    @Named("getRoute")
+    fun getCountryStats(dataSource: HikariDataSource): HttpRoute {
+        return GetCountryStatsRoute(dataSource)
+    }
+
+    @Named("postRoute")
+    fun postGeoData(dataSource: HikariDataSource): HttpRoute {
+        return PostGeoDataRoute(
+            dataSource = dataSource,
             geoDataBatchDelay = geoDataBatchDelay,
         )
-
-        return postRoute.processFunction.invoke(request)
     }
-
 }

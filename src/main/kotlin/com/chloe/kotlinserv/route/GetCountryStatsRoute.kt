@@ -6,9 +6,10 @@ import com.chloe.kotlinserv.http.HttpResponse
 import com.chloe.kotlinserv.http.HttpRoute
 import com.chloe.kotlinserv.model.CountryStats
 import com.google.gson.Gson
+import com.google.inject.Inject
 import com.zaxxer.hikari.HikariDataSource
 
-class GetCountryStatsRoute(private val dataSource: HikariDataSource) : HttpRoute {
+class GetCountryStatsRoute @Inject constructor(private val dataSource: HikariDataSource) : HttpRoute {
     override val endpoint = "/countrystats"
     override val method = HttpMethod.GET
 

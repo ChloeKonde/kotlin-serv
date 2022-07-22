@@ -8,9 +8,14 @@ import com.chloe.kotlinserv.model.GeoData
 import com.chloe.kotlinserv.writer.ClickhouseGeoDataWriterImpl
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import com.zaxxer.hikari.HikariDataSource
 
-class PostGeoDataRoute(private val dataSource: HikariDataSource, private val geoDataBatchDelay: Long) : HttpRoute {
+class PostGeoDataRoute @Inject constructor(
+    private val dataSource: HikariDataSource,
+    @Named("geoDataBatchDelay") private val geoDataBatchDelay: Long
+) : HttpRoute {
     override val endpoint = "/geodata"
     override val method = HttpMethod.POST
 
