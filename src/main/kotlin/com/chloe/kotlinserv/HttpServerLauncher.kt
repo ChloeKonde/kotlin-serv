@@ -1,5 +1,6 @@
 package com.chloe.kotlinserv
 
+import com.chloe.kotlinserv.http.HttpRequest
 import com.typesafe.config.ConfigFactory
 import java.io.File
 
@@ -12,5 +13,5 @@ fun main(args: Array<String>) {
 
     val port = config.getInt("port")
 
-    myServer.start(port, listOf(diModule.getCountryStats(), diModule.postGeoData()))
+  //  myServer.start(port, listOf(diModule.getCountryStats(), diModule.postGeoData()))
 }
