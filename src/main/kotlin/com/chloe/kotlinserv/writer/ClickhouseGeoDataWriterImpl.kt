@@ -4,13 +4,12 @@ import com.chloe.kotlinserv.model.GeoData
 import com.zaxxer.hikari.HikariDataSource
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 
 private data class FullData(val geoData: GeoData, val ipAddress: String?)
 
 class ClickhouseGeoDataWriterImpl(private val ds: HikariDataSource, geoDataBatchDelay: Long) : GeoDataWriter {
     private val list = (mutableListOf<FullData>())
-    private val lock = ReentrantLock()
+    private val lock = Object()
     private val query = "insert into chloe.events (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
