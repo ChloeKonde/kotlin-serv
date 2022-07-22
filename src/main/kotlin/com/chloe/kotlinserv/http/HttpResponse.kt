@@ -1,4 +1,4 @@
-package com.chloe.kotlinserv
+package com.chloe.kotlinserv.http
 
 typealias Headers = Map<String, String>
 

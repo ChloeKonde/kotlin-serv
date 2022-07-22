@@ -1,5 +1,12 @@
 package com.chloe.kotlinserv
 
+import com.chloe.kotlinserv.http.HttpMethod
+import com.chloe.kotlinserv.http.HttpResponse
+import com.chloe.kotlinserv.http.HttpRoute
+import com.chloe.kotlinserv.model.CountryStats
+import com.chloe.kotlinserv.model.GeoData
+import com.chloe.kotlinserv.vertx.VertxHttpServer
+import com.chloe.kotlinserv.writer.ClickhouseGeoDataWriterImpl
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.typesafe.config.ConfigFactory
@@ -44,21 +51,31 @@ fun main(args: Array<String>) {
 
                 val result = statement.executeQuery()
 
-                val list = mutableListOf<RawResponseFromClickhouse>()
+                val list = mutableListOf<CountryStats>()
                 while (result.next()) {
                     list.add(
-                        RawResponseFromClickhouse(
-                            timestamp = result.getString(1),
+                        CountryStats(
+                            date = result.getString(1),
                             country = result.getString(2),
+                            count = 1
                         )
                     )
                 }
 
-                val groupingResult = list.groupingBy { it.timestamp to it.country }.eachCount().toList()
+                val groupingResult = list.groupingBy { countryStats ->
+                    countryStats.date to countryStats.country
+                }.reduce { key: Pair<String, String>, accumulator: CountryStats, element: CountryStats ->
+                    CountryStats(
+                        date = accumulator.date,
+                        country = accumulator.country,
+                        count = accumulator.count + element.count
+                    )
+                }.toList()
+
                 val data = mutableListOf<CountryStats>()
 
-                groupingResult.forEach {
-                    data.add(CountryStats(it.first.first, it.first.second, it.second))
+                groupingResult.forEach { tmp ->
+                    data.add(tmp.second)
                 }
 
                 HttpResponse(
@@ -85,7 +102,7 @@ fun main(args: Array<String>) {
                 while (result.next()) {
                     list.add(
                         CountryStats(
-                            data = result.getString(2),
+                            date = result.getString(2),
                             country = result.getString(1),
                             count = result.getInt(3)
                         )

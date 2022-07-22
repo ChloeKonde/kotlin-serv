@@ -1,4 +1,4 @@
-package com.chloe.kotlinserv
+package com.chloe.kotlinserv.http
 
 data class HttpRoute(
     val endpoint: String,
