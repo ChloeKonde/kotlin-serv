@@ -3,19 +3,38 @@ package com.chloe.kotlinserv
 import com.chloe.kotlinserv.http.HttpMethod
 import com.chloe.kotlinserv.http.HttpResponse
 import com.chloe.kotlinserv.http.HttpRoute
+import com.chloe.kotlinserv.http.HttpServer
 import com.chloe.kotlinserv.model.CountryStats
 import com.chloe.kotlinserv.model.GeoData
+import com.chloe.kotlinserv.vertx.VertxHttpServer
 import com.chloe.kotlinserv.writer.ClickhouseGeoDataWriterImpl
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import com.typesafe.config.Config
+import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 
-class DiModule(private val geoDataBatchDelay: Long, private val ds: HikariDataSource) {
+class DiModule(private val config: Config) {
     private val json = Gson()
+    private val geoDataBatchDelay = config.getLong("geoData.write.batch.delay")
 
+    fun getClickhouseDataSource() : HikariDataSource {
+        val conf = HikariConfig()
+        val url = config.getString("clickhouse.url")
+
+        conf.jdbcUrl = url
+        conf.driverClassName = "com.clickhouse.jdbc.ClickHouseDriver"
+        conf.username = config.getString("clickhouse.user")
+        conf.password = config.getString("clickhouse.password")
+
+        return HikariDataSource(conf)
+    }
+    fun getHttpServer() : HttpServer {
+        return VertxHttpServer()
+    }
     fun getCountryStats(): HttpRoute {
         val getRoute = HttpRoute("/countrystats", HttpMethod.GET) {
-            val connection = ds.connection
+            val connection = getClickhouseDataSource().connection
             val groupLocal = it.queryParameters.getValue("groupLocal").firstOrNull()
             val startDate = it.queryParameters.getValue("startDate").firstOrNull()
             val endDate = it.queryParameters.getValue("endDate").firstOrNull()
@@ -110,7 +129,7 @@ class DiModule(private val geoDataBatchDelay: Long, private val ds: HikariDataSo
     }
 
     fun postGeoData(): HttpRoute {
-        val batch = ClickhouseGeoDataWriterImpl(ds = ds, geoDataBatchDelay = geoDataBatchDelay)
+        val batch = ClickhouseGeoDataWriterImpl(ds = getClickhouseDataSource(), geoDataBatchDelay = geoDataBatchDelay)
 
         val postRoute = HttpRoute("/geodata", HttpMethod.POST) {
             if (it.body == null) {
