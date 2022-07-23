@@ -7,7 +7,7 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 
-class VertxHttpServer constructor(
+class VertxHttpServer @Inject constructor(
     @Inject private val setRoute: Set<HttpRoute>
 ) : HttpServer {
 

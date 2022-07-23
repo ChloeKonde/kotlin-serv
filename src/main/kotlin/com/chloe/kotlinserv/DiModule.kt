@@ -15,11 +15,6 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 
 class DiModule(private val config: Config) : AbstractModule() {
-    private val actionBinder: Multibinder<HttpRoute>? = null
-
-    @Named("geoDataBatchDelay")
-    private val geoDataBatchDelay = config.getLong("geoData.write.batch.delay")
-
     @Provides
     private fun getClickhouseDataSource(): HikariDataSource {
         val conf = HikariConfig()
@@ -38,10 +33,11 @@ class DiModule(private val config: Config) : AbstractModule() {
         httpRoutes.addBinding().to(GetCountryStatsRoute::class.java).`in`(Singleton::class.java)
         httpRoutes.addBinding().to(PostGeoDataRoute::class.java).`in`(Singleton::class.java)
 
+        bind(HttpServer::class.java).to(VertxHttpServer::class.java).`in`(Singleton::class.java)
+
         bindConstant().annotatedWith(Names.named("geoDataBatchDelay")).to(config.getLong("geoData.write.batch.delay"))
     }
 
-    @Provides
     fun getHttpServer(httpRoutes: Set<HttpRoute>): HttpServer {
         return VertxHttpServer(httpRoutes)
     }
@@ -52,7 +48,7 @@ class DiModule(private val config: Config) : AbstractModule() {
     }
 
     @Named("postRoute")
-    fun postGeoData(dataSource: HikariDataSource): HttpRoute {
+    fun postGeoData(dataSource: HikariDataSource, @Named("geoDataBatchDelay") geoDataBatchDelay: Long): HttpRoute {
         return PostGeoDataRoute(
             dataSource = dataSource,
             geoDataBatchDelay = geoDataBatchDelay,
