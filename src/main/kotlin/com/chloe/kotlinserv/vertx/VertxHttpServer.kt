@@ -1,6 +1,10 @@
 package com.chloe.kotlinserv.vertx
 
-import com.chloe.kotlinserv.http.*
+import com.chloe.kotlinserv.http.HttpMethod
+import com.chloe.kotlinserv.http.HttpRequest
+import com.chloe.kotlinserv.http.HttpResponse
+import com.chloe.kotlinserv.http.HttpRoute
+import com.chloe.kotlinserv.http.HttpServer
 import com.google.inject.Inject
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
@@ -8,7 +12,7 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 
 class VertxHttpServer @Inject constructor(
-    @Inject private val setRoute: Set<HttpRoute>
+    private val routes: Set<HttpRoute>
 ) : HttpServer {
 
     override fun start(port: Int) {
@@ -16,7 +20,7 @@ class VertxHttpServer @Inject constructor(
         val httpServer = vertx.createHttpServer()
         val router = Router.router(vertx)
 
-        setRoute.forEach { route: HttpRoute -> deployVertxRoute(route, router) }
+        routes.forEach { route: HttpRoute -> deployVertxRoute(route, router) }
 
         httpServer.requestHandler(router).listen(port)
     }

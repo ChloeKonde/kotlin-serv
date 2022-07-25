@@ -8,7 +8,7 @@ import com.zaxxer.hikari.HikariDataSource
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private data class FullData(val geoData: GeoData, val ipAddress: String?)
+private data class GeoIpData(val geoData: GeoData, val ipAddress: String?)
 
 class GeoDataServiceImpl @Inject constructor(
     private val ds: HikariDataSource,
@@ -16,7 +16,7 @@ class GeoDataServiceImpl @Inject constructor(
     @Named("tableName") private val tableName: String,
     @Named("databaseName") private val dbName: String
 ) : GeoDataService {
-    private val list = (mutableListOf<FullData>())
+    private val list = (mutableListOf<GeoIpData>())
     private val lock = Object()
     private val query = "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
@@ -33,12 +33,12 @@ class GeoDataServiceImpl @Inject constructor(
 
     override fun addToList(geoData: GeoData, ipAddress: String?) {
         synchronized(lock) {
-            list.add(FullData(geoData, ipAddress))
+            list.add(GeoIpData(geoData, ipAddress))
         }
     }
 
     override fun flush() {
-        var tmp: List<FullData>
+        var tmp: List<GeoIpData>
         synchronized(lock) {
             tmp = list.toList()
             list.clear()
@@ -65,7 +65,15 @@ class GeoDataServiceImpl @Inject constructor(
         }
     }
 
-    override fun retrieveCountryStatsLocal(startDate: String?, endDate: String?): MutableList<CountryStats> {
+    override fun retrieveCountryStats(startDate: String, endDate: String, groupLocal: Boolean): List<CountryStats> {
+        return if (groupLocal) {
+            groupLocal(startDate, endDate)
+        } else {
+            groupNonLocal(startDate, endDate)
+        }
+    }
+
+    private fun groupLocal(startDate: String, endDate: String): List<CountryStats> {
         val connection = ds.connection
 
         val statement = connection.prepareStatement(
@@ -107,7 +115,7 @@ class GeoDataServiceImpl @Inject constructor(
         return data
     }
 
-    override fun retrieveCountryStatsNonLocal(startDate: String?, endDate: String?): MutableList<CountryStats> {
+    private fun groupNonLocal(startDate: String, endDate: String): List<CountryStats> {
         val connection = ds.connection
 
         connection.use {

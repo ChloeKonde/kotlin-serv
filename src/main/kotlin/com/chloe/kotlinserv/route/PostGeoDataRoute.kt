@@ -32,7 +32,7 @@ class PostGeoDataRoute @Inject constructor(
                 HttpResponse(
                     code = 200,
                     responseBody = null,
-                    contentType = mapOf("content-type" to "application/com.chloe.kotlinserv.utils.getJson")
+                    contentType = mapOf("content-type" to "application/json")
                 )
             } catch (e: JsonSyntaxException) {
                 HttpResponse(

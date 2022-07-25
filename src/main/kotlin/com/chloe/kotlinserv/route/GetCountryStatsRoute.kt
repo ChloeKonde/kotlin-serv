@@ -15,20 +15,29 @@ class GetCountryStatsRoute @Inject constructor(
     override val method = HttpMethod.GET
 
     override val processFunction = { request: HttpRequest ->
-        val groupLocal = request.queryParameters.getValue("groupLocal").firstOrNull()
-        val startDate = request.queryParameters.getValue("startDate").firstOrNull()
-        val endDate = request.queryParameters.getValue("endDate").firstOrNull()
+        val groupLocal =
+            request.queryParameters
+                .getValue("groupLocal")
+                .firstOrNull() ?: throw IllegalArgumentException("groupLocal can't be null")
+
+        val startDate = request.queryParameters
+            .getValue("startDate")
+            .firstOrNull() ?: throw IllegalArgumentException("startDate can't be null")
+
+        val endDate = request.queryParameters
+            .getValue("endDate")
+            .firstOrNull() ?: throw IllegalArgumentException("endDate can't be null")
 
         if (groupLocal == "true") {
-            val data = geoDataServiceImpl.retrieveCountryStatsLocal(startDate, endDate)
+            val data = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
             HttpResponse(
                 code = 200,
                 responseBody = data.toJson(),
-                contentType = mapOf("content-type" to "application/com.chloe.kotlinserv.utils.getJson")
+                contentType = mapOf("content-type" to "application/json")
             )
         } else {
-            val list = geoDataServiceImpl.retrieveCountryStatsNonLocal(startDate, endDate)
+            val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
             if (list.isEmpty()) {
                 HttpResponse(
                     code = 204,
@@ -39,7 +48,7 @@ class GetCountryStatsRoute @Inject constructor(
                 HttpResponse(
                     code = 200,
                     responseBody = list.toJson(),
-                    contentType = mapOf("content-type" to "application/com.chloe.kotlinserv.utils.getJson")
+                    contentType = mapOf("content-type" to "application/json")
                 )
             }
         }

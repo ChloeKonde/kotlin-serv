@@ -1,11 +1,12 @@
 package com.chloe.kotlinserv
 
-import com.chloe.kotlinserv.http.*
+import com.chloe.kotlinserv.http.HttpRoute
+import com.chloe.kotlinserv.http.HttpServer
 import com.chloe.kotlinserv.route.GetCountryStatsRoute
 import com.chloe.kotlinserv.route.PostGeoDataRoute
-import com.chloe.kotlinserv.vertx.VertxHttpServer
 import com.chloe.kotlinserv.service.GeoDataService
 import com.chloe.kotlinserv.service.GeoDataServiceImpl
+import com.chloe.kotlinserv.vertx.VertxHttpServer
 import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton

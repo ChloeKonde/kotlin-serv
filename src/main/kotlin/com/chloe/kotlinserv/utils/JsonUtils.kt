@@ -10,6 +10,6 @@ fun String.fromJson(): GeoData {
     return json.fromJson(this, GeoData::class.java)
 }
 
-fun MutableList<CountryStats>.toJson(): String {
+fun List<CountryStats>.toJson(): String {
     return json.toJson(this)
 }

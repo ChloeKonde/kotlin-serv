@@ -5,9 +5,8 @@ import com.chloe.kotlinserv.model.GeoData
 
 interface GeoDataService {
     fun addToList(geoData: GeoData, ipAddress: String?)
+
     fun flush()
 
-    fun retrieveCountryStatsLocal(startDate: String?, endDate: String?): MutableList<CountryStats>
-
-    fun retrieveCountryStatsNonLocal(startDate: String?, endDate: String?): MutableList<CountryStats>
+    fun retrieveCountryStats(startDate: String, endDate: String, groupLocal: Boolean): List<CountryStats>
 }
