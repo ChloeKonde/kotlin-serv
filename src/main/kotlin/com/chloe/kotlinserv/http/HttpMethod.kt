@@ -1,4 +1,4 @@
-package com.chloe.kotlinserv
+package com.chloe.kotlinserv.http
 
 enum class HttpMethod {
     POST, GET

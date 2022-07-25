@@ -144,6 +144,11 @@
             <version>4.1.72.Final</version>
             <classifier>osx-aarch_64</classifier>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>5.1.0</version>
+        </dependency>
     </dependencies>
 
     <profiles>
