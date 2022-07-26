@@ -12,8 +12,8 @@ import com.google.inject.Inject
 class PostGeoDataRoute @Inject constructor(
     private val geoDataServiceImpl: GeoDataServiceImpl,
 ) : HttpRoute {
-    override val endpoint = "/geodata"
-    override val method = HttpMethod.POST
+    override val endpoint: String = "/geodata"
+    override val method: HttpMethod = HttpMethod.POST
 
     override val processFunction = { request: HttpRequest ->
         if (request.body == null) {

@@ -16,9 +16,9 @@ class GeoDataServiceImpl @Inject constructor(
     @Named("tableName") private val tableName: String,
     @Named("databaseName") private val dbName: String
 ) : GeoDataService {
-    private val list = (mutableListOf<GeoIpData>())
-    private val lock = Object()
-    private val query = "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
+    private val list: MutableList<GeoIpData> = mutableListOf()
+    private val lock: Any = Object()
+    private val query: String = "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
         val executor = Executors.newScheduledThreadPool(1)
