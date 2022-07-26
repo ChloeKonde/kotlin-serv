@@ -1,4 +1,4 @@
-package com.chloe.kotlinserv
+package com.chloe.kotlinserv.http
 
 data class HttpRequest(
     val requestHeaders: Map<String, List<String>>,

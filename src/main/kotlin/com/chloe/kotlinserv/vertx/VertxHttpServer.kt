@@ -1,18 +1,27 @@
-package com.chloe.kotlinserv
+package com.chloe.kotlinserv.vertx
 
+import com.chloe.kotlinserv.http.HttpMethod
+import com.chloe.kotlinserv.http.HttpRequest
+import com.chloe.kotlinserv.http.HttpResponse
+import com.chloe.kotlinserv.http.HttpRoute
+import com.chloe.kotlinserv.http.HttpServer
+import com.google.inject.Inject
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 
-class VertxHttpServer : HttpServer {
+class VertxHttpServer @Inject constructor(
+    private val routes: Set<HttpRoute>
+) : HttpServer {
 
-    override fun start(port: Int, routes: List<HttpRoute>) {
+    override fun start(port: Int) {
         val vertx = Vertx.vertx()
         val httpServer = vertx.createHttpServer()
         val router = Router.router(vertx)
 
-        routes.forEach { route -> deployVertxRoute(route, router) }
+        routes.forEach { route: HttpRoute -> deployVertxRoute(route, router) }
+
         httpServer.requestHandler(router).listen(port)
     }
 
