@@ -21,9 +21,7 @@ class GetCountryStatsRoute @Inject constructor(
     override val processFunction = { request: HttpRequest ->
         try {
             val groupLocal = request.getQueryParameter("groupLocal")
-
             val startDate = request.getQueryParameter("startDate")
-
             val endDate = request.getQueryParameter("endDate")
 
             if (groupLocal == "true") {
@@ -36,6 +34,7 @@ class GetCountryStatsRoute @Inject constructor(
                 )
             } else {
                 val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
+
                 if (list.isEmpty()) {
                     HttpResponse(
                         code = 204,
@@ -52,7 +51,7 @@ class GetCountryStatsRoute @Inject constructor(
             }
         } catch (e: IllegalArgumentException) {
             println(e)
-            HttpResponse(302, null, mapOf("content-type" to "application/json"))
+            HttpResponse(400, null, mapOf("content-type" to "application/json"))
         }
     }
 }
