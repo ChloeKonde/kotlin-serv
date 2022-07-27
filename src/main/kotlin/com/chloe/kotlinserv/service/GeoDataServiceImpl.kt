@@ -5,10 +5,13 @@ import com.chloe.kotlinserv.model.GeoData
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.zaxxer.hikari.HikariDataSource
+import mu.KotlinLogging
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 private data class GeoIpData(val geoData: GeoData, val ipAddress: String?)
+
+private val logger = KotlinLogging.logger { }
 
 class GeoDataServiceImpl @Inject constructor(
     private val ds: HikariDataSource,
@@ -44,8 +47,8 @@ class GeoDataServiceImpl @Inject constructor(
             tmp = list.toList()
             list.clear()
         }
-
         tmp.takeIf { it.isNotEmpty() }?.let {
+            logger.debug("start flush to clickhouse")
             try {
                 val connection = ds.connection
                 connection.use {
@@ -59,9 +62,10 @@ class GeoDataServiceImpl @Inject constructor(
                         st.addBatch()
                     }
                     st.executeBatch()
+                    logger.debug("finish flushing to clickhouse, added ${tmp.count()} elements")
                 }
             } catch (e: Exception) {
-                println(e)
+                logger.error("Can't save data to clickhouse", e)
             }
         }
     }
@@ -79,7 +83,7 @@ class GeoDataServiceImpl @Inject constructor(
 
         val statement = connection.prepareStatement(
             "SELECT toDate(timestamp), country from $dbName.$tableName " +
-                    "where toDate(timestamp) > ? and toDate(timestamp) < ?"
+                "where toDate(timestamp) > ? and toDate(timestamp) < ?"
         )
 
         statement.setString(1, startDate)
@@ -123,8 +127,8 @@ class GeoDataServiceImpl @Inject constructor(
             val statement =
                 connection.prepareStatement(
                     "SELECT country, toDate(timestamp) as time, count(country) " +
-                            "FROM chloe.events WHERE toDate(timestamp) > ? AND toDate(timestamp) < ?" +
-                            " GROUP BY country, toDate(timestamp)"
+                        "FROM chloe.events WHERE toDate(timestamp) > ? AND toDate(timestamp) < ?" +
+                        " GROUP BY country, toDate(timestamp)"
                 )
 
             statement.setString(1, startDate)

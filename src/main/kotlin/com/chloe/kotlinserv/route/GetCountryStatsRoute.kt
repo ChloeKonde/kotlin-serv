@@ -53,7 +53,7 @@ class GetCountryStatsRoute @Inject constructor(
                 }
             }
         } catch (e: IllegalArgumentException) {
-            logger.error { e }
+            logger.error("Error in country stats request process", e)
             HttpResponse(400, null, mapOf("content-type" to "application/json"))
         }
     }

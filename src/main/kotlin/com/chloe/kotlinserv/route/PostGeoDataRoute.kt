@@ -38,7 +38,7 @@ class PostGeoDataRoute @Inject constructor(
                     contentType = mapOf("content-type" to "application/json")
                 )
             } catch (e: JsonSyntaxException) {
-                logger.error { e }
+                logger.error("Geo data couldn't be parsed", e)
                 HttpResponse(
                     code = 400,
                     responseBody = null,
