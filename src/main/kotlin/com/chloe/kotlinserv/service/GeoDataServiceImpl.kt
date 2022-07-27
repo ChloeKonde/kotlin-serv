@@ -18,7 +18,8 @@ class GeoDataServiceImpl @Inject constructor(
 ) : GeoDataService {
     private val list: MutableList<GeoIpData> = mutableListOf()
     private val lock: Any = Object()
-    private val query: String = "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
+    private val query: String =
+        "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
         val executor = Executors.newScheduledThreadPool(1)
@@ -78,7 +79,7 @@ class GeoDataServiceImpl @Inject constructor(
 
         val statement = connection.prepareStatement(
             "SELECT toDate(timestamp), country from $dbName.$tableName " +
-                "where toDate(timestamp) > ? and toDate(timestamp) < ?"
+                    "where toDate(timestamp) > ? and toDate(timestamp) < ?"
         )
 
         statement.setString(1, startDate)
@@ -122,8 +123,8 @@ class GeoDataServiceImpl @Inject constructor(
             val statement =
                 connection.prepareStatement(
                     "SELECT country, toDate(timestamp) as time, count(country) " +
-                        "FROM chloe.events WHERE toDate(timestamp) > ? AND toDate(timestamp) < ?" +
-                        " GROUP BY country, toDate(timestamp)"
+                            "FROM chloe.events WHERE toDate(timestamp) > ? AND toDate(timestamp) < ?" +
+                            " GROUP BY country, toDate(timestamp)"
                 )
 
             statement.setString(1, startDate)

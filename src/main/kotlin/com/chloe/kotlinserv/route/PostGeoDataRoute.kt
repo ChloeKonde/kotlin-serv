@@ -8,6 +8,9 @@ import com.chloe.kotlinserv.service.GeoDataServiceImpl
 import com.chloe.kotlinserv.utils.fromJson
 import com.google.gson.JsonSyntaxException
 import com.google.inject.Inject
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 class PostGeoDataRoute @Inject constructor(
     private val geoDataServiceImpl: GeoDataServiceImpl,
@@ -35,6 +38,7 @@ class PostGeoDataRoute @Inject constructor(
                     contentType = mapOf("content-type" to "application/json")
                 )
             } catch (e: JsonSyntaxException) {
+                logger.error { e }
                 HttpResponse(
                     code = 400,
                     responseBody = null,
