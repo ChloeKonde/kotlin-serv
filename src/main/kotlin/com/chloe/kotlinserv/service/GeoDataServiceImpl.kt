@@ -25,6 +25,7 @@ class GeoDataServiceImpl @Inject constructor(
         "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
+        logger.debug { "init scheduled thread pool with executor" }
         val executor = Executors.newScheduledThreadPool(1)
 
         executor.scheduleAtFixedRate(
@@ -79,6 +80,7 @@ class GeoDataServiceImpl @Inject constructor(
     }
 
     private fun groupLocal(startDate: String, endDate: String): List<CountryStats> {
+        logger.debug { "start grouping local" }
         val connection = ds.connection
 
         val statement = connection.prepareStatement(
@@ -117,10 +119,13 @@ class GeoDataServiceImpl @Inject constructor(
         groupingResult.forEach { tmp ->
             data.add(tmp.second)
         }
+        logger.debug { "finish grouping local" }
         return data
     }
 
     private fun groupNonLocal(startDate: String, endDate: String): List<CountryStats> {
+        logger.debug { "start grouping in db" }
+
         val connection = ds.connection
 
         connection.use {
@@ -146,6 +151,7 @@ class GeoDataServiceImpl @Inject constructor(
                     )
                 )
             }
+            logger.debug { "finish grouping in db" }
             return list
         }
     }

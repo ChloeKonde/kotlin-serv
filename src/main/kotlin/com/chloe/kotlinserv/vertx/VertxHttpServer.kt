@@ -10,12 +10,16 @@ import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger { }
 
 class VertxHttpServer @Inject constructor(
     private val routes: Set<HttpRoute>
 ) : HttpServer {
 
     override fun start(port: Int) {
+        logger.debug { "start vertx server" }
         val vertx = Vertx.vertx()
         val httpServer = vertx.createHttpServer()
         val router = Router.router(vertx)
@@ -23,9 +27,11 @@ class VertxHttpServer @Inject constructor(
         routes.forEach { route: HttpRoute -> deployVertxRoute(route, router) }
 
         httpServer.requestHandler(router).listen(port)
+        logger.debug { "vertx server working on $port port" }
     }
 
     private fun deployVertxRoute(route: HttpRoute, router: Router) {
+        logger.debug { "start deploying vertx route $route" }
         router.route().handler(BodyHandler.create())
 
         if (route.method == HttpMethod.GET) {
@@ -36,6 +42,7 @@ class VertxHttpServer @Inject constructor(
                     HttpRequest(requestHeaders = headers, body = null, queryParameters = queryParams)
                 )
                 convertHttpResponse(ctx, httpResponse)
+                logger.debug { "finish deploying country stats route" }
             }
         } else {
             router.post(route.endpoint).handler { ctx ->
@@ -46,6 +53,7 @@ class VertxHttpServer @Inject constructor(
                     HttpRequest(requestHeaders = headers, body = body, queryParameters = queryParams)
                 )
                 convertHttpResponse(ctx, httpResponse)
+                logger.debug { "finish deploying geo data route" }
             }
         }
     }
