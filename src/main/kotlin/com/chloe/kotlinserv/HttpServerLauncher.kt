@@ -20,5 +20,5 @@ fun main(args: Array<String>) {
 
     httpServer.start(port)
 
-    logger.info("Application has started on port = $port")
+    logger.info { "Application has started on port = $port" }
 }

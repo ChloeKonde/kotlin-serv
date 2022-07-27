@@ -48,7 +48,7 @@ class GeoDataServiceImpl @Inject constructor(
             list.clear()
         }
         tmp.takeIf { it.isNotEmpty() }?.let {
-            logger.debug("start flush to clickhouse")
+            logger.debug { "start flush to clickhouse" }
             try {
                 val connection = ds.connection
                 connection.use {
@@ -62,10 +62,10 @@ class GeoDataServiceImpl @Inject constructor(
                         st.addBatch()
                     }
                     st.executeBatch()
-                    logger.debug("finish flushing to clickhouse, added ${tmp.count()} elements")
+                    logger.debug { "finish flushing to clickhouse, added ${tmp.count()} elements" }
                 }
             } catch (e: Exception) {
-                logger.error("Can't save data to clickhouse", e)
+                logger.error { "Can't save data to clickhouse: $e"}
             }
         }
     }
