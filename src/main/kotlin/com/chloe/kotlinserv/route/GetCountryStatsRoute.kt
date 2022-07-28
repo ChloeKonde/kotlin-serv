@@ -7,6 +7,9 @@ import com.chloe.kotlinserv.http.HttpRoute
 import com.chloe.kotlinserv.service.GeoDataServiceImpl
 import com.chloe.kotlinserv.utils.toJson
 import com.google.inject.Inject
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger { }
 
 class GetCountryStatsRoute @Inject constructor(
     private val geoDataServiceImpl: GeoDataServiceImpl
@@ -50,7 +53,7 @@ class GetCountryStatsRoute @Inject constructor(
                 }
             }
         } catch (e: IllegalArgumentException) {
-            println(e)
+            logger.error(e) { "Error in country stats request process" }
             HttpResponse(400, null, mapOf("content-type" to "application/json"))
         }
     }

@@ -5,10 +5,13 @@ import com.chloe.kotlinserv.model.GeoData
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.zaxxer.hikari.HikariDataSource
+import mu.KotlinLogging
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 private data class GeoIpData(val geoData: GeoData, val ipAddress: String?)
+
+private val logger = KotlinLogging.logger { }
 
 class GeoDataServiceImpl @Inject constructor(
     private val ds: HikariDataSource,
@@ -18,9 +21,11 @@ class GeoDataServiceImpl @Inject constructor(
 ) : GeoDataService {
     private val list: MutableList<GeoIpData> = mutableListOf()
     private val lock: Any = Object()
-    private val query: String = "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
+    private val query: String =
+        "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
+        logger.debug { "Init scheduled thread pool with executor" }
         val executor = Executors.newScheduledThreadPool(1)
 
         executor.scheduleAtFixedRate(
@@ -33,6 +38,7 @@ class GeoDataServiceImpl @Inject constructor(
 
     override fun addToList(geoData: GeoData, ipAddress: String?) {
         synchronized(lock) {
+            logger.debug { "Adding to list $geoData with ip: $ipAddress" }
             list.add(GeoIpData(geoData, ipAddress))
         }
     }
@@ -43,8 +49,8 @@ class GeoDataServiceImpl @Inject constructor(
             tmp = list.toList()
             list.clear()
         }
-
         tmp.takeIf { it.isNotEmpty() }?.let {
+            logger.debug { "Start flush to clickhouse" }
             try {
                 val connection = ds.connection
                 connection.use {
@@ -58,9 +64,10 @@ class GeoDataServiceImpl @Inject constructor(
                         st.addBatch()
                     }
                     st.executeBatch()
+                    logger.debug { "Finish flushing to clickhouse, added ${tmp.count()} elements" }
                 }
             } catch (e: Exception) {
-                println(e)
+                logger.error(e) { "Can't save data to clickhouse" }
             }
         }
     }
@@ -74,6 +81,7 @@ class GeoDataServiceImpl @Inject constructor(
     }
 
     private fun groupLocal(startDate: String, endDate: String): List<CountryStats> {
+        logger.debug { "Start grouping local" }
         val connection = ds.connection
 
         val statement = connection.prepareStatement(
@@ -112,10 +120,13 @@ class GeoDataServiceImpl @Inject constructor(
         groupingResult.forEach { tmp ->
             data.add(tmp.second)
         }
+        logger.debug { "Finish grouping local" }
         return data
     }
 
     private fun groupNonLocal(startDate: String, endDate: String): List<CountryStats> {
+        logger.debug { "Start grouping in db" }
+
         val connection = ds.connection
 
         connection.use {
@@ -141,6 +152,7 @@ class GeoDataServiceImpl @Inject constructor(
                     )
                 )
             }
+            logger.debug { "Finish grouping in db" }
             return list
         }
     }
