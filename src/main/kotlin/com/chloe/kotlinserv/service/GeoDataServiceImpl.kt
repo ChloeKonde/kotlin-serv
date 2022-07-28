@@ -25,7 +25,7 @@ class GeoDataServiceImpl @Inject constructor(
         "insert into $dbName.$tableName (timestamp, country, ipAddress, userId) values (?, ?, ?, ?)"
 
     init {
-        logger.debug { "init scheduled thread pool with executor" }
+        logger.debug { "Init scheduled thread pool with executor" }
         val executor = Executors.newScheduledThreadPool(1)
 
         executor.scheduleAtFixedRate(
@@ -38,6 +38,7 @@ class GeoDataServiceImpl @Inject constructor(
 
     override fun addToList(geoData: GeoData, ipAddress: String?) {
         synchronized(lock) {
+            logger.debug { "Adding to list $geoData with ip: $ipAddress" }
             list.add(GeoIpData(geoData, ipAddress))
         }
     }
@@ -49,7 +50,7 @@ class GeoDataServiceImpl @Inject constructor(
             list.clear()
         }
         tmp.takeIf { it.isNotEmpty() }?.let {
-            logger.debug { "start flush to clickhouse" }
+            logger.debug { "Start flush to clickhouse" }
             try {
                 val connection = ds.connection
                 connection.use {
@@ -63,10 +64,10 @@ class GeoDataServiceImpl @Inject constructor(
                         st.addBatch()
                     }
                     st.executeBatch()
-                    logger.debug { "finish flushing to clickhouse, added ${tmp.count()} elements" }
+                    logger.debug { "Finish flushing to clickhouse, added ${tmp.count()} elements" }
                 }
             } catch (e: Exception) {
-                logger.error { "Can't save data to clickhouse: $e"}
+                logger.error { "Can't save data to clickhouse: $e" }
             }
         }
     }
@@ -80,7 +81,7 @@ class GeoDataServiceImpl @Inject constructor(
     }
 
     private fun groupLocal(startDate: String, endDate: String): List<CountryStats> {
-        logger.debug { "start grouping local" }
+        logger.debug { "Start grouping local" }
         val connection = ds.connection
 
         val statement = connection.prepareStatement(
@@ -119,12 +120,12 @@ class GeoDataServiceImpl @Inject constructor(
         groupingResult.forEach { tmp ->
             data.add(tmp.second)
         }
-        logger.debug { "finish grouping local" }
+        logger.debug { "Finish grouping local" }
         return data
     }
 
     private fun groupNonLocal(startDate: String, endDate: String): List<CountryStats> {
-        logger.debug { "start grouping in db" }
+        logger.debug { "Start grouping in db" }
 
         val connection = ds.connection
 
@@ -151,7 +152,7 @@ class GeoDataServiceImpl @Inject constructor(
                     )
                 )
             }
-            logger.debug { "finish grouping in db" }
+            logger.debug { "Finish grouping in db" }
             return list
         }
     }
