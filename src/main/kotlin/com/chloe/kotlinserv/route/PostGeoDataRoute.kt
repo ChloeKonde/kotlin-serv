@@ -18,9 +18,9 @@ class PostGeoDataRoute @Inject constructor(
     override val endpoint: String = "/geodata"
     override val method: HttpMethod = HttpMethod.POST
 
-    override val processFunction = { request: HttpRequest ->
+    override fun processFunction(request: HttpRequest): HttpResponse {
         if (request.body == null) {
-            HttpResponse(
+            return HttpResponse(
                 code = 400,
                 responseBody = null,
                 contentType = mapOf("content-type" to "text/plain")
@@ -32,14 +32,14 @@ class PostGeoDataRoute @Inject constructor(
 
                 geoDataServiceImpl.addToList(data, requestHeaders?.firstOrNull())
 
-                HttpResponse(
+                return HttpResponse(
                     code = 200,
                     responseBody = null,
                     contentType = mapOf("content-type" to "application/json")
                 )
             } catch (e: JsonSyntaxException) {
                 logger.error(e) { "Geo data couldn't be parsed" }
-                HttpResponse(
+                return HttpResponse(
                     code = 400,
                     responseBody = null,
                     contentType = mapOf("content-type" to "text/plain")

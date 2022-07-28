@@ -21,7 +21,7 @@ class GetCountryStatsRoute @Inject constructor(
         return this.queryParameters[key]?.firstOrNull() ?: throw IllegalArgumentException("$key can't be null")
     }
 
-    override val processFunction = { request: HttpRequest ->
+    override fun processFunction(request: HttpRequest): HttpResponse {
         try {
             val groupLocal = request.getQueryParameter("groupLocal")
             val startDate = request.getQueryParameter("startDate")
@@ -30,7 +30,7 @@ class GetCountryStatsRoute @Inject constructor(
             if (groupLocal == "true") {
                 val data = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
-                HttpResponse(
+                return HttpResponse(
                     code = 200,
                     responseBody = data.toJson(),
                     contentType = mapOf("content-type" to "application/json")
@@ -38,7 +38,7 @@ class GetCountryStatsRoute @Inject constructor(
             } else {
                 val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
-                if (list.isEmpty()) {
+                return if (list.isEmpty()) {
                     HttpResponse(
                         code = 204,
                         responseBody = null,
@@ -54,7 +54,7 @@ class GetCountryStatsRoute @Inject constructor(
             }
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Error in country stats request process" }
-            HttpResponse(400, null, mapOf("content-type" to "application/json"))
+            return HttpResponse(400, null, mapOf("content-type" to "application/json"))
         }
     }
 }
