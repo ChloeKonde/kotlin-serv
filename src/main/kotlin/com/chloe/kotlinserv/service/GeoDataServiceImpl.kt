@@ -67,7 +67,7 @@ class GeoDataServiceImpl @Inject constructor(
                     logger.debug { "Finish flushing to clickhouse, added ${tmp.count()} elements" }
                 }
             } catch (e: Exception) {
-                logger.error { "Can't save data to clickhouse: $e" }
+                logger.error(e) { "Can't save data to clickhouse" }
             }
         }
     }
