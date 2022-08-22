@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 
 class TestGetCountryStats {
     @Test
-    fun `get grouping local info`() {
+    fun testProcessFunction_WhenServiceRespondWithGroupedLocalData_ShouldReturn200CodeWithBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
 
         every {
@@ -75,7 +75,7 @@ class TestGetCountryStats {
     }
 
     @Test
-    fun `empty response from db with group local`() {
+    fun testProcessFunction_WhenServiceRespondWithGroupedLocalData_ShouldReturn204CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
 
         every {
@@ -119,7 +119,7 @@ class TestGetCountryStats {
     }
 
     @Test
-    fun `empty response from db without group local`() {
+    fun testProcessFunction_WhenServiceRespondWithoutGroupedLocalData_ShouldReturn204CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
 
         every {
@@ -163,7 +163,7 @@ class TestGetCountryStats {
     }
 
     @Test
-    fun `get grouping info without grouping local`() {
+    fun testProcessFunction_WhenServiceRespondWithoutGroupedLocalData_ShouldReturn200CodeWithBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
 
         every {
@@ -223,7 +223,7 @@ class TestGetCountryStats {
     }
 
     @Test
-    fun `retrieve data with wrong request parameters`() {
+    fun testProcessFunction_WhenServiceRequestsWithWrongQueryParameters_ShouldReturn400CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
 
         every {
