@@ -138,7 +138,7 @@ class TestGetCountryStats {
             queryParameters = mapOf(
                 "startDate" to listOf("2022-01-01"),
                 "endDate" to listOf("2023-07-15"),
-                "groupLocal" to listOf("true")
+                "groupLocal" to listOf("false")
             )
         )
         val result = getCountryStatsRoute.processFunction(httpRequest)
@@ -253,5 +253,6 @@ class TestGetCountryStats {
 
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.responseBody, result.responseBody)
+        assertEquals(expectedHttpResponse.contentType, result.contentType)
     }
 }
