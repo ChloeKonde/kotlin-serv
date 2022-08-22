@@ -5,6 +5,7 @@ import com.chloe.kotlinserv.http.HttpResponse
 import com.chloe.kotlinserv.model.CountryStats
 import com.chloe.kotlinserv.route.GetCountryStatsRoute
 import com.chloe.kotlinserv.service.GeoDataServiceImpl
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -17,7 +18,6 @@ class TestGetCountryStats {
     @Test
     fun testProcessFunction_WhenServiceRespondWithGroupedLocalData_ShouldReturn200CodeWithBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
-
         every {
             serviceImpl.retrieveCountryStats(
                 startDate = "1972-01-01",
@@ -33,7 +33,6 @@ class TestGetCountryStats {
             CountryStats("1990-04-12", "WAS", 3),
             CountryStats("1990-04-12", "QWE", 7)
         )
-
         val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
         val httpRequest = HttpRequest(
@@ -46,7 +45,6 @@ class TestGetCountryStats {
             )
         )
         val result = getCountryStatsRoute.processFunction(httpRequest)
-
         verify {
             serviceImpl.retrieveCountryStats(
                 startDate = "1972-01-01",
@@ -68,10 +66,10 @@ class TestGetCountryStats {
             """,
             contentType = mapOf("content-type" to "application/json")
         )
-
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.contentType, result.contentType)
         JSONAssert.assertEquals(expectedHttpResponse.responseBody, result.responseBody, JSONCompareMode.LENIENT)
+        confirmVerified()
     }
 
     @Test
