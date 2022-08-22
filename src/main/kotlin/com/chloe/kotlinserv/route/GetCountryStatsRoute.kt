@@ -30,11 +30,19 @@ class GetCountryStatsRoute @Inject constructor(
             if (groupLocal == "true") {
                 val data = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
-                return HttpResponse(
-                    code = 200,
-                    responseBody = data.toJson(),
-                    contentType = mapOf("content-type" to "application/json")
-                )
+                return if (data.isNotEmpty()) {
+                    HttpResponse(
+                        code = 200,
+                        responseBody = data.toJson(),
+                        contentType = mapOf("content-type" to "application/json")
+                    )
+                } else {
+                    HttpResponse(
+                        code = 204,
+                        responseBody = null,
+                        contentType = mapOf("content-type" to "text/plain")
+                    )
+                }
             } else {
                 val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
