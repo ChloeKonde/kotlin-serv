@@ -21,7 +21,7 @@ class GetCountryStatsRoute @Inject constructor(
         return this.queryParameters[key]?.firstOrNull() ?: throw IllegalArgumentException("$key can't be null")
     }
 
-    override val processFunction = { request: HttpRequest ->
+    override fun process(request: HttpRequest): HttpResponse {
         try {
             val groupLocal = request.getQueryParameter("groupLocal")
             val startDate = request.getQueryParameter("startDate")
@@ -30,19 +30,27 @@ class GetCountryStatsRoute @Inject constructor(
             if (groupLocal == "true") {
                 val data = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
 
-                HttpResponse(
-                    code = 200,
-                    responseBody = data.toJson(),
-                    contentType = mapOf("content-type" to "application/json")
-                )
-            } else {
-                val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
-
-                if (list.isEmpty()) {
+                return if (data.isNotEmpty()) {
+                    HttpResponse(
+                        code = 200,
+                        responseBody = data.toJson(),
+                        contentType = mapOf("content-type" to "application/json")
+                    )
+                } else {
                     HttpResponse(
                         code = 204,
                         responseBody = null,
-                        contentType = mapOf("content-type" to "text/plain")
+                        contentType = mapOf()
+                    )
+                }
+            } else {
+                val list = geoDataServiceImpl.retrieveCountryStats(startDate, endDate, groupLocal.toBoolean())
+
+                return if (list.isEmpty()) {
+                    HttpResponse(
+                        code = 204,
+                        responseBody = null,
+                        contentType = mapOf()
                     )
                 } else {
                     HttpResponse(
@@ -54,7 +62,18 @@ class GetCountryStatsRoute @Inject constructor(
             }
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Error in country stats request process" }
-            HttpResponse(400, null, mapOf("content-type" to "application/json"))
+            return HttpResponse(
+                code = 400,
+                responseBody = null,
+                contentType = mapOf()
+            )
+        } catch (e: Exception) {
+            logger.error(e) { "Error in country stats request process" }
+            return HttpResponse(
+                code = 500,
+                responseBody = null,
+                contentType = mapOf()
+            )
         }
     }
 }
