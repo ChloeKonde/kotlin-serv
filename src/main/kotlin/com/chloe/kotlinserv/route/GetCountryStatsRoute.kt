@@ -40,7 +40,7 @@ class GetCountryStatsRoute @Inject constructor(
                     HttpResponse(
                         code = 204,
                         responseBody = null,
-                        contentType = mapOf("content-type" to "text/plain")
+                        contentType = mapOf()
                     )
                 }
             } else {
@@ -50,7 +50,7 @@ class GetCountryStatsRoute @Inject constructor(
                     HttpResponse(
                         code = 204,
                         responseBody = null,
-                        contentType = mapOf("content-type" to "text/plain")
+                        contentType = mapOf()
                     )
                 } else {
                     HttpResponse(
@@ -65,14 +65,14 @@ class GetCountryStatsRoute @Inject constructor(
             return HttpResponse(
                 code = 400,
                 responseBody = null,
-                contentType = mapOf("content-type" to "application/json")
+                contentType = mapOf()
             )
         } catch (e: Exception) {
             logger.error(e) { "Error in country stats request process" }
             return HttpResponse(
                 code = 500,
                 responseBody = null,
-                contentType = mapOf("content-type" to "application/json")
+                contentType = mapOf()
             )
         }
     }
