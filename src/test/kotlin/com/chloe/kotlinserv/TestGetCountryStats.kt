@@ -44,7 +44,7 @@ class TestGetCountryStats {
                 "groupLocal" to listOf("true")
             )
         )
-        val result = getCountryStatsRoute.processFunction(httpRequest)
+        val result = getCountryStatsRoute.process(httpRequest)
         verify {
             serviceImpl.retrieveCountryStats(
                 startDate = "1972-01-01",
@@ -75,7 +75,6 @@ class TestGetCountryStats {
     @Test
     fun testProcessFunction_WhenServiceRespondWithGroupedLocalData_ShouldReturn204CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
-
         every {
             serviceImpl.retrieveCountryStats(
                 startDate = "2022-01-01",
@@ -83,7 +82,6 @@ class TestGetCountryStats {
                 groupLocal = true
             )
         } returns listOf()
-
         val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
         val httpRequest = HttpRequest(
@@ -95,8 +93,7 @@ class TestGetCountryStats {
                 "groupLocal" to listOf("true")
             )
         )
-        val result = getCountryStatsRoute.processFunction(httpRequest)
-
+        val result = getCountryStatsRoute.process(httpRequest)
         verify {
             serviceImpl.retrieveCountryStats(
                 startDate = "2022-01-01",
@@ -110,16 +107,15 @@ class TestGetCountryStats {
             responseBody = null,
             contentType = mapOf("content-type" to "application/json")
         )
-
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.contentType, expectedHttpResponse.contentType)
         assertEquals(expectedHttpResponse.responseBody, expectedHttpResponse.responseBody)
+        confirmVerified()
     }
 
     @Test
     fun testProcessFunction_WhenServiceRespondWithoutGroupedLocalData_ShouldReturn204CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
-
         every {
             serviceImpl.retrieveCountryStats(
                 startDate = "2022-01-01",
@@ -127,7 +123,6 @@ class TestGetCountryStats {
                 groupLocal = false
             )
         } returns listOf()
-
         val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
         val httpRequest = HttpRequest(
@@ -139,8 +134,7 @@ class TestGetCountryStats {
                 "groupLocal" to listOf("false")
             )
         )
-        val result = getCountryStatsRoute.processFunction(httpRequest)
-
+        val result = getCountryStatsRoute.process(httpRequest)
         verify {
             serviceImpl.retrieveCountryStats(
                 startDate = "2022-01-01",
@@ -154,16 +148,15 @@ class TestGetCountryStats {
             responseBody = null,
             contentType = mapOf("content-type" to "application/json")
         )
-
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.contentType, expectedHttpResponse.contentType)
         assertEquals(expectedHttpResponse.responseBody, expectedHttpResponse.responseBody)
+        confirmVerified()
     }
 
     @Test
     fun testProcessFunction_WhenServiceRespondWithoutGroupedLocalData_ShouldReturn200CodeWithBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
-
         every {
             serviceImpl.retrieveCountryStats(
                 startDate = "1972-01-01",
@@ -179,7 +172,6 @@ class TestGetCountryStats {
             CountryStats("1990-04-12", "WAS", 3),
             CountryStats("1990-04-12", "QWE", 7)
         )
-
         val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
         val httpRequest = HttpRequest(
@@ -191,8 +183,7 @@ class TestGetCountryStats {
                 "groupLocal" to listOf("false")
             )
         )
-        val result = getCountryStatsRoute.processFunction(httpRequest)
-
+        val result = getCountryStatsRoute.process(httpRequest)
         verify {
             serviceImpl.retrieveCountryStats(
                 startDate = "1972-01-01",
@@ -214,24 +205,22 @@ class TestGetCountryStats {
             """,
             contentType = mapOf("content-type" to "application/json")
         )
-
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.contentType, result.contentType)
         JSONAssert.assertEquals(expectedHttpResponse.responseBody, result.responseBody, JSONCompareMode.LENIENT)
+        confirmVerified()
     }
 
     @Test
     fun testProcessFunction_WhenServiceRequestsWithWrongQueryParameters_ShouldReturn400CodeWithoutBody() {
         val serviceImpl = mockk<GeoDataServiceImpl>()
-
         every {
             serviceImpl.retrieveCountryStats(
-                startDate = "1972-01-01",
-                endDate = "1990-07-15",
+                startDate = "2022-01-01",
+                endDate = "2023-07-15",
                 groupLocal = any()
             )
         } throws IllegalArgumentException()
-
         val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
         val httpRequest = HttpRequest(
@@ -240,17 +229,60 @@ class TestGetCountryStats {
             queryParameters = mapOf(
                 "startDate" to listOf("2022-01-01"),
                 "endDate" to listOf("2023-07-15"),
+                "g" to listOf()
             )
         )
+        val result = getCountryStatsRoute.process(httpRequest)
+
         val expectedHttpResponse = HttpResponse(
             code = 400,
             responseBody = null,
             contentType = mapOf("content-type" to "application/json")
         )
-        val result = getCountryStatsRoute.processFunction(httpRequest)
-
         assertEquals(expectedHttpResponse.code, result.code)
         assertEquals(expectedHttpResponse.responseBody, result.responseBody)
         assertEquals(expectedHttpResponse.contentType, result.contentType)
+        confirmVerified()
+    }
+
+    @Test
+    fun testProcessFunction_WhenServiceThrowsException_ShouldReturn500CodeWithoutBody() {
+        val serviceImpl = mockk<GeoDataServiceImpl>()
+        every {
+            serviceImpl.retrieveCountryStats(
+                startDate = any(),
+                endDate = any(),
+                groupLocal = any()
+            )
+        } throws Exception()
+        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
+
+        val httpRequest = HttpRequest(
+            requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
+            body = null,
+            queryParameters = mapOf(
+                "startDate" to listOf("2022-01-01"),
+                "endDate" to listOf("2023-07-15"),
+                "groupLocal" to listOf("true")
+            )
+        )
+        val result = getCountryStatsRoute.process(httpRequest)
+        verify {
+            serviceImpl.retrieveCountryStats(
+                startDate = "2022-01-01",
+                endDate = "2023-07-15",
+                groupLocal = true
+            )
+        }
+
+        val expectedHttpResponse = HttpResponse(
+            code = 500,
+            responseBody = null,
+            contentType = mapOf("content-type" to "application/json")
+        )
+        assertEquals(expectedHttpResponse.code, result.code)
+        assertEquals(expectedHttpResponse.responseBody, result.responseBody)
+        assertEquals(expectedHttpResponse.contentType, result.contentType)
+        confirmVerified()
     }
 }

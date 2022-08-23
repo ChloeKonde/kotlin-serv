@@ -38,7 +38,7 @@ class VertxHttpServer @Inject constructor(
             router.get(route.endpoint).handler { ctx ->
                 val headers = getHeaders(ctx)
                 val queryParams = getQueryParams(ctx)
-                val httpResponse = route.processFunction(
+                val httpResponse = route.process(
                     HttpRequest(requestHeaders = headers, body = null, queryParameters = queryParams)
                 )
                 convertHttpResponse(ctx, httpResponse)
@@ -49,7 +49,7 @@ class VertxHttpServer @Inject constructor(
                 val headers = getHeaders(ctx)
                 val queryParams = getQueryParams(ctx)
                 val body = ctx.body().asString()
-                val httpResponse = route.processFunction(
+                val httpResponse = route.process(
                     HttpRequest(requestHeaders = headers, body = body, queryParameters = queryParams)
                 )
                 convertHttpResponse(ctx, httpResponse)

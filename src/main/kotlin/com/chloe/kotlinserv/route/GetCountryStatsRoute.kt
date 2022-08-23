@@ -21,7 +21,7 @@ class GetCountryStatsRoute @Inject constructor(
         return this.queryParameters[key]?.firstOrNull() ?: throw IllegalArgumentException("$key can't be null")
     }
 
-    override fun processFunction(request: HttpRequest): HttpResponse {
+    override fun process(request: HttpRequest): HttpResponse {
         try {
             val groupLocal = request.getQueryParameter("groupLocal")
             val startDate = request.getQueryParameter("startDate")
@@ -62,7 +62,18 @@ class GetCountryStatsRoute @Inject constructor(
             }
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Error in country stats request process" }
-            return HttpResponse(400, null, mapOf("content-type" to "application/json"))
+            return HttpResponse(
+                code = 400,
+                responseBody = null,
+                contentType = mapOf("content-type" to "application/json")
+            )
+        } catch (e: Exception) {
+            logger.error(e) { "Error in country stats request process" }
+            return HttpResponse(
+                code = 500,
+                responseBody = null,
+                contentType = mapOf("content-type" to "application/json")
+            )
         }
     }
 }
