@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 
 class TestGetCountryStats {
     private val serviceImpl = mockk<GeoDataServiceImpl>()
+    private val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
 
     @Test
     fun testProcessFunction_WhenServiceRespondWithGroupedLocalData_ShouldReturn200CodeWithBody() {
@@ -34,7 +35,6 @@ class TestGetCountryStats {
             CountryStats("1990-04-12", "WAS", 3),
             CountryStats("1990-04-12", "QWE", 7)
         )
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -82,7 +82,6 @@ class TestGetCountryStats {
                 groupLocal = true
             )
         } returns listOf()
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -122,7 +121,6 @@ class TestGetCountryStats {
                 groupLocal = false
             )
         } returns listOf()
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -170,7 +168,6 @@ class TestGetCountryStats {
             CountryStats("1990-04-12", "WAS", 3),
             CountryStats("1990-04-12", "QWE", 7)
         )
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -218,7 +215,6 @@ class TestGetCountryStats {
                 groupLocal = any()
             )
         } throws IllegalArgumentException()
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -251,7 +247,6 @@ class TestGetCountryStats {
                 groupLocal = any()
             )
         } throws Exception()
-        val getCountryStatsRoute = GetCountryStatsRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,

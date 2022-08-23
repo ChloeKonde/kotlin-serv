@@ -14,13 +14,13 @@ import kotlin.test.assertEquals
 
 class TestPostGeoData {
     private val serviceImpl = mockk<GeoDataServiceImpl>()
+    private val postGeoDataRoute = PostGeoDataRoute(serviceImpl)
 
     @Test
     fun testProcessFunction_WhenHttpRequestWithEmptyBody_ShouldReturn400CodeWithoutBody() {
         justRun {
             serviceImpl.addToList(any(), any())
         }
-        val postGeoDataRoute = PostGeoDataRoute(serviceImpl)
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf("192.168.50.10")),
             body = null,
@@ -45,7 +45,6 @@ class TestPostGeoData {
         justRun {
             serviceImpl.addToList(any(), any())
         }
-        val postGeoDataRoute = PostGeoDataRoute(serviceImpl)
         val geoDataObj = GeoData(country = "eng", timestamp = 4549055295, userId = "user0")
         val geoDataString = """{"country":"eng","timestamp":4549055295,"userId":"user0"}"""
         val ipAddress = "192.168.50.10"
@@ -76,7 +75,6 @@ class TestPostGeoData {
         justRun {
             serviceImpl.addToList(any(), any())
         }
-        val postGeoDataRoute = PostGeoDataRoute(serviceImpl)
         val ipAddress = "192.168.50.10"
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf(ipAddress)),
@@ -102,7 +100,6 @@ class TestPostGeoData {
         justRun {
             serviceImpl.addToList(any(), any())
         }
-        val postGeoDataRoute = PostGeoDataRoute(serviceImpl)
         val ipAddress = "192.168.50.10"
         val httpRequest = HttpRequest(
             requestHeaders = mapOf("x-forwarded-for" to listOf(ipAddress)),
